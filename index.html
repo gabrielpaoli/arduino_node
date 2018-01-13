@@ -13,12 +13,8 @@
     
   </head>
 
-
   <body>
-
-
     <div class="container">
-
 
       <h1>Ericometro</h1>
       
@@ -81,25 +77,6 @@
       </div>
 
 
-          
-
-      <div id="bar" class="col-md-12"><div class="bar-inn"></div></div>
-     
-      <div class="col-md-12 buttons-container">
-        <div class="col-md-6 nopadding button_inn"><button id="buttonUp">Subir</button></div>
-        <div class="col-md-6 nopadding button_inn"><button id="buttonDown">Bajar</button></div>
-      </div>
-
-      <div class="container-messages col-md-12">
-
-        <ul id="messages"></ul>
-
-        <form id="sendMessageForm" action="">
-          <input id="m" autocomplete="off" /><button id="sendButtonFormChat">Send</button>
-        </form>
-
-      </div>
-
     </div>
 
   </body>
@@ -113,13 +90,6 @@
 
     $(function () {  
       var socket = io();
-      var num = 5;
-
-      $('#sendMessageForm').submit(function(){
-        socket.emit('chat message', $('#m').val());
-        $('#m').val('');
-        return false;
-      });
 
       $('#createUser').submit(function(){
         var userParameters = {
@@ -132,44 +102,15 @@
         return false;
       });
 
-      $('#buttonUp').click(function(){
-        socket.emit('bar up', num);
-      });  
-      $('#buttonDown').click(function(){
-        socket.emit('bar down', num);
-      });      
-
-      socket.on('bar up', function(msg){
-        $('.bar-inn').css('width', msg + '%');
-        colorBar(msg);
+      $('#LoginUser').submit(function(){
+        var userParameters = {
+          name: $('#loginUserName').val(), 
+          pass: $('#loginUserPass').val()
+        };
+        socket.emit('login user', userParameters);
+        return false;
       });
 
-      socket.on('bar down', function(msg){
-        $('.bar-inn').css('width', msg + '%');
-        colorBar(msg);
-      });
-
-      socket.on('chat message', function(msg){
-        $('#messages').append($('<li>').text(msg));
-      });
-
-      socket.on('user connect', function(msg){
-        $('#messages').append($('<li>').text(msg));
-      });
-
-      socket.on('user disconnect', function(msg){
-        $('#messages').append($('<li>').text(msg));
-      });
-
-      function colorBar(msg){
-        if(msg <= 30){
-          $('.bar-inn').css('background-color','green');  
-        }else if(msg > 30 && msg <= 70){
-          $('.bar-inn').css('background-color','yellow');
-        }else{
-          $('.bar-inn').css('background-color','red');
-        }
-      }
     });
   </script>
     

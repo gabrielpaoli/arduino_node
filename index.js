@@ -7,19 +7,26 @@ var five = require("johnny-five");
 
 const express = require('express');
 
-
 //routes
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
 
-app.use(express.static('public'));
+app.get('/ericometro', function(req, res){
+	if(user.status === true){
+		res.sendFile(__dirname + '/ericometro.html');
+	}else{
+    res.status(403);
+    res.send('<p>You do not have permissions</p>');
+	}	
+});
 
+app.use(express.static('public'));
 
 //Create connection with Arduino Uno
 var board = new five.Board();  
 board.on("ready", function() {  
-  console.log("Ready!");  
+  console.log("Connected to Arduino!");  
 });  
 
 //Create connection with database
@@ -32,7 +39,7 @@ var con = mysql.createConnection({
 
 con.connect(function(err) {
   if (err) throw err;
-  console.log("Connected!");	
+  console.log("Connected to database!");	
   var sql = "CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), password VARCHAR(255))";
   con.query(sql, function (err, result) {
     if (err) throw err;
@@ -41,9 +48,14 @@ con.connect(function(err) {
 
 var total = 0;
 var num = 0;
+var user = [];
+user.status = false;
+user.id = null;
+user.name = null;
+user.pass = null;			
 
 io.on('connection', function(socket){
-
+	
 	//When user connect
   io.emit('user connect', 'usuario conectado');  	
   
@@ -71,7 +83,6 @@ io.on('connection', function(socket){
     io.emit('bar up', num);
 
 		colorPin(total);
-
   });
 
   //When user click bajar
@@ -84,7 +95,6 @@ io.on('connection', function(socket){
     io.emit('bar down', num);
 
 		colorPin(total);
-
   });
 
   //Save user in database
@@ -94,6 +104,20 @@ io.on('connection', function(socket){
 		  con.query(sql, function (err, result) {
 		    if (err) throw err;
 				console.log(colors.yellow('One user created'));
+		  });
+	  });
+  });
+
+  //Login user
+  socket.on('login user', function(userParameters){
+  	con.connect(function(err) {
+			var sql = `SELECT * FROM users WHERE name = "`+userParameters.name+`" AND password = "`+userParameters.pass+`"`;
+		  con.query(sql, function (err, result) {
+		    if (err) throw err;
+		    user.status = true;
+				user.id = result[0].id;
+				user.name = result[0].name;
+				user.pass = result[0].password;		    
 		  });
 	  });
   });
@@ -141,5 +165,5 @@ setInterval(function() {
 	io.emit('bar down', num);
 	colorPin(total);
 
-}, 5000 * 60);
+}, 2000 * 60);
 
